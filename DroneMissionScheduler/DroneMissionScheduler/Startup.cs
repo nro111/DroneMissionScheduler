@@ -1,3 +1,5 @@
+using DroneMissionScheduler.Core;
+using DroneMissionScheduler.Core.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -22,6 +24,8 @@ namespace DroneMissionScheduler
         {
 
             services.AddControllersWithViews();
+
+            services.AddScoped<IDBContext, DBContext>();
 
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration =>
