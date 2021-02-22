@@ -14,8 +14,8 @@ namespace DroneMissionScheduler.Core
         public IClientSessionHandle Session { get; set; }
         public DBContext()
         {
-            _mongoClient = new MongoClient("mongodb+srv://MissionScheduleAdmin:This16@D6)!@missionschedules.00l2e.mongodb.net/myFirstDatabase?retryWrites=true&w=majority");
-            _db = _mongoClient.GetDatabase("test");
+            _mongoClient = new MongoClient("mongodb+srv://MissionScheduleAdmin:E5DLTMCqOybDqFyw@missionschedules.00l2e.mongodb.net?connect=replicaSet");
+            _db = _mongoClient.GetDatabase("MissionDB");            
         }
 
         public IMongoCollection<T> GetCollection<T>(string name)

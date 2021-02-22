@@ -1,5 +1,8 @@
 ﻿using DroneMissionScheduler.Core.Interfaces;
+using DroneMissionScheduler.Models;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Driver;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,40 +17,62 @@ namespace DroneMissionScheduler.Controllers
     public class DroneController : ControllerBase
     {
         private IDBContext _DBContext;
+        private IMongoCollection<Drone> _DBCollection;
         public DroneController(IDBContext DBContext)
         {
             _DBContext = DBContext;
+            _DBCollection = _DBContext.GetCollection<Drone>("Drones");
         }
         // GET: api/<DroneController>
         [HttpGet]
-        public IEnumerable<string> Get()
+        [Route("getAll")]
+        public async Task<string> GetAll()
         {
-            return new string[] { "value1", "value2" };
+            try
+            {
+                var drones = await _DBCollection.FindAsync(_ => true);
+                return JsonConvert.SerializeObject(drones.ToListAsync().Result);
+            }
+            catch(Exception ex)
+            {
+                return ex.Message;
+            }            
         }
 
-        // GET api/<DroneController>/5
-        [HttpGet("{id}")]
+
+        // GET api/<DroneController>/get/5
+        [HttpGet]
+        [Route("get/{id}")]
         public string Get(int id)
         {
-            return "value";
+            var drone = _DBCollection.FindAsync(x => x._id.Equals(id)).Result;
+            return JsonConvert.SerializeObject(drone);
         }
 
-        // POST api/<DroneController>
+        // POST api/<DroneController>/add/{json}
         [HttpPost]
-        public void Post([FromBody] string value)
+        [Route("add/{json}")]
+        public void Add(string json)
         {
+            var drone = JsonConvert.DeserializeObject<Drone>(json);
+            _DBCollection.InsertOneAsync(drone);
         }
 
-        // PUT api/<DroneController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        // PUT api/<DroneController>/id/{id}/as/{json}
+        [HttpPut]
+        [Route("update/id/{id}/as/{json}")]
+        public void Update(int id, string json)
         {
+            var drone = JsonConvert.DeserializeObject<Drone>(json);
+            _DBCollection.ReplaceOneAsync(x => x._id.Equals(id), drone);
         }
 
-        // DELETE api/<DroneController>/5
-        [HttpDelete("{id}")]
+        // DELETE api/<DroneController>/delete/{id}
+        [HttpDelete]
+        [Route("delete/{id}")]
         public void Delete(int id)
         {
+            _DBCollection.DeleteOneAsync(x => x._id.Equals(id));
         }
     }
 }

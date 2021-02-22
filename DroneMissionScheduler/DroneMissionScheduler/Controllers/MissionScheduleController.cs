@@ -1,8 +1,8 @@
 ﻿using DroneMissionScheduler.Core.Interfaces;
+using DroneMissionScheduler.Models;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using MongoDB.Driver;
+using Newtonsoft.Json;
 using System.Threading.Tasks;
 
 namespace DroneMissionScheduler.Controllers
@@ -12,41 +12,56 @@ namespace DroneMissionScheduler.Controllers
     public class MissionScheduleController : ControllerBase
     {
         private IDBContext _DBContext;
+        private IMongoCollection<Mission> _DBCollection;
         public MissionScheduleController(IDBContext DBContext)
         {
             _DBContext = DBContext;
+            _DBCollection = _DBContext.GetCollection<Mission>("Missions");
         }
 
         // GET: api/<MissionScheduleController>
         [HttpGet]
-        public IEnumerable<string> GetAll()
+        [Route("getAll")]
+        public async Task<string> GetAll()
         {
-            return new string[] { "value1", "value2" };
+            var missions = await _DBCollection.FindAsync(_ => true);
+            return JsonConvert.SerializeObject(missions.ToListAsync().Result);
         }
 
-        // GET api/<MissionScheduleController>/5
-        [HttpGet("{id}")]
-        public string GetSpecific(int id)
+
+        // GET api/<MissionScheduleController>/get/5
+        [HttpGet]
+        [Route("get/{id}")]
+        public string Get(int id)
         {
-            return "value";
+            var mission = _DBCollection.FindAsync(x => x._id.Equals(id)).Result;
+            return JsonConvert.SerializeObject(mission);
         }
 
-        // POST api/<MissionScheduleController>
+        // POST api/<MissionScheduleController>/add/{json}
         [HttpPost]
-        public void Post([FromBody] string value)
+        [Route("add/{json}")]
+        public void Add(string json)
         {
+            var mission = JsonConvert.DeserializeObject<Mission>(json);
+            _DBCollection.InsertOneAsync(mission);
         }
 
-        // PUT api/<MissionScheduleController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        // PUT api/<MissionScheduleController>/id/{id}/as/{json}
+        [HttpPut]
+        [Route("update/id/{id}/as/{json}")]
+        public void Update(int id, string json)
         {
+            var missionSchedule = JsonConvert.DeserializeObject<Mission>(json);
+            _DBCollection.ReplaceOneAsync(x => x._id.Equals(id), missionSchedule);
         }
 
-        // DELETE api/<MissionScheduleController>/5
-        [HttpDelete("{id}")]
+        // DELETE api/<MissionScheduleController>/delete/{id}
+        [HttpDelete]
+        [Route("delete/{id}")]
         public void Delete(int id)
         {
+            _DBCollection.DeleteOneAsync(x => x._id.Equals(id));
         }
     }
 }
